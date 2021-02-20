@@ -3,6 +3,7 @@ package com.distributed.p2pFileTransfer;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,6 +18,7 @@ class QueryListener implements Runnable {
   private final HashMap<Node, List<Executor>> pendingExecutors;
   private Logger logger;
   private long queryCount = 0;
+  private final Set<String> pendingSearchQueries = ConcurrentHashMap.newKeySet();
 
   public QueryListener(AbstractFileTransferService fileTransferService, int port)
       throws SocketException {
@@ -154,13 +156,30 @@ class QueryListener implements Runnable {
 
     @Override
     public void run() {
+      Query responseQuery;
+      if (pendingSearchQueries.contains(searchQuery)){
+        String body = fileTransferService.getCommandBuilder().getSearchOkCommand(Collections.singletonList("<ignore>"), queryId);
+        responseQuery = Query.createQuery(body, sender);
+        try {
+          QueryResult result =
+                  fileTransferService.getQueryDispatcher().dispatchOne(responseQuery).get();
+          logger.log(
+                  Level.INFO,
+                  String.format(
+                          "response %s send to message id %s", responseQuery.body, queryId.toString()));
+        } catch (InterruptedException | ExecutionException e) {
+          e.printStackTrace();
+        }
+        return;
+      }
+      pendingSearchQueries.add(searchQuery);
       FileHandler fileHandler = fileTransferService.getFileHandler();
       List<String> files = fileHandler.searchForFile(searchQuery);
-      Query responseQuery = null;
       try {
         List<String> neighbourFiles = fileTransferService.searchForFileSkippingSource(searchQuery,sender).get();
+        pendingSearchQueries.remove(searchQuery);
         for (String file : neighbourFiles) {
-           if(!files.contains(file)){
+           if(!file.equals("<ignore>") && !files.contains(file)){
              files.add(file);
            }
         }
