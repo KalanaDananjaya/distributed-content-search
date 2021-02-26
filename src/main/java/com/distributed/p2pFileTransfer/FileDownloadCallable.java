@@ -37,6 +37,7 @@ public class FileDownloadCallable implements Callable<FileDownloadResult> {
     public FileDownloadResult call() throws IOException {
         FileDownloadResult result;
         Boolean fileExists = fileStorage.checkFileExists(fileName,destination);
+        // Check if file is already avaialable locally
         if (!fileExists){
             URL url = new URL("http://" + source.getIpAddress().getHostAddress() + ":" + source.getPort() + "/file/" + strippedFileName);
             HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
@@ -44,7 +45,14 @@ public class FileDownloadCallable implements Callable<FileDownloadResult> {
             int fileSize = httpURLConnection.getContentLength();
             fileStorage.makeCacheSpace(fileSize);
             if (fileHash != null) {
-                result = downloadFile(httpURLConnection, fileHash, fileSize, destination);
+                // Check again to see whether the file has been downloaded from another node
+                fileExists = fileStorage.checkFileExists(fileName,destination);
+                if (!fileExists){
+                    result = downloadFile(httpURLConnection, fileHash, fileSize, destination);
+                }
+                else{
+                    result = new FileDownloadResult("File has been already downloaded", 1);
+                }
             } else {
                 result = new FileDownloadResult("Hash not available", 1);
             }
