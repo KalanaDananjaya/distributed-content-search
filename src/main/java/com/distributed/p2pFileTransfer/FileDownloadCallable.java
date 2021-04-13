@@ -36,23 +36,25 @@ public class FileDownloadCallable implements Callable<FileDownloadResult> {
     @Override
     public FileDownloadResult call() throws IOException {
         FileDownloadResult result;
-        Boolean fileExists = fileStorage.checkFileExists(fileName,destination);
-        // Check if file is already available locally
-        if (!fileExists){
-            URL url = new URL("http://" + source.getIpAddress().getHostAddress() + ":" + source.getPort() + "/file/" + strippedFileName);
-            HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-            String fileHash = httpURLConnection.getHeaderField("Hash");
-            int fileSize = httpURLConnection.getContentLength();
-            fileStorage.makeCacheSpace(fileSize);
-            if (fileHash != null) {
-                result = downloadFile(httpURLConnection, fileHash, fileSize, destination);
+        synchronized (fileStorage){
+            Boolean fileExists = fileStorage.checkFileExists(fileName,destination);
+            // Check if file is already available locally
+            if (!fileExists){
+                URL url = new URL("http://" + source.getIpAddress().getHostAddress() + ":" + source.getPort() + "/file/" + strippedFileName);
+                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                String fileHash = httpURLConnection.getHeaderField("Hash");
+                int fileSize = httpURLConnection.getContentLength();
+                fileStorage.makeCacheSpace(fileSize);
+                if (fileHash != null) {
+                    result = downloadFile(httpURLConnection, fileHash, fileSize, destination);
+                }
+                else {
+                    result = new FileDownloadResult("Hash not available", 1);
+                }
             }
             else {
-                result = new FileDownloadResult("Hash not available", 1);
+                result = new FileDownloadResult("File already exists locally", 1);
             }
-        }
-        else {
-            result = new FileDownloadResult("File already exists locally", 1);
         }
         return result;
     }
