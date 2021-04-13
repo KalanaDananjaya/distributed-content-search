@@ -37,6 +37,7 @@ public class FileDownloadCallable implements Callable<FileDownloadResult> {
     public FileDownloadResult call() throws IOException {
         FileDownloadResult result;
         Boolean fileExists = fileStorage.checkFileExists(fileName,destination);
+        // Check if file is already available locally
         if (!fileExists){
             URL url = new URL("http://" + source.getIpAddress().getHostAddress() + ":" + source.getPort() + "/file/" + strippedFileName);
             HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
@@ -45,7 +46,8 @@ public class FileDownloadCallable implements Callable<FileDownloadResult> {
             fileStorage.makeCacheSpace(fileSize);
             if (fileHash != null) {
                 result = downloadFile(httpURLConnection, fileHash, fileSize, destination);
-            } else {
+            }
+            else {
                 result = new FileDownloadResult("Hash not available", 1);
             }
         }
@@ -75,17 +77,24 @@ public class FileDownloadCallable implements Callable<FileDownloadResult> {
         byte[] buffer = new byte[fileSize];
         if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
             if (inputStream.available() != 0) {
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
+                // Check again to see whether the file has been downloaded from another node
+                Boolean fileExists = fileStorage.checkFileExists(fileName,destination);
+                if (!fileExists){
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                    }
+                    outputStream.close();
+                    fileStorage.updateDirectoryListing(destination, fileName);
+                    this.logger.log(Level.INFO, String.format("Downloaded %s", saveFilePath));
+                    String hexHash = this.fileStorage.getFileHash(new File(saveFilePath));
+                    if (hexHash.equals(fileHash)) {
+                        return new FileDownloadResult("File download successful", 0);
+                    } else {
+                        return new FileDownloadResult("Hash do not match", 1);
+                    }
                 }
-                outputStream.close();
-                fileStorage.updateDirectoryListing(destination, fileName);
-                this.logger.log(Level.INFO, String.format("Downloaded %s", saveFilePath));
-                String hexHash = this.fileStorage.getFileHash(new File(saveFilePath));
-                if (hexHash.equals(fileHash)) {
-                    return new FileDownloadResult("File download successful", 0);
-                } else {
-                    return new FileDownloadResult("Hash do not match", 1);
+                else{
+                    return new FileDownloadResult("File has been already downloaded", 1);
                 }
             } else {
                 return new FileDownloadResult("Input stream empty", 0);

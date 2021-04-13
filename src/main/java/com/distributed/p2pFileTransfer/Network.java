@@ -4,10 +4,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -16,8 +13,8 @@ class Network {
   private final AbstractFileTransferService fileTransferService;
   private final Node boostrapServer;
 
-  private TreeMap<Integer, ArrayList<Node>> routingTable =
-      new TreeMap<Integer, ArrayList<Node>>(Collections.reverseOrder());
+  private ConcurrentSkipListMap<Integer, ArrayList<Node>> routingTable =
+      new ConcurrentSkipListMap<Integer, ArrayList<Node>>(Collections.reverseOrder());
   ;
 
   private QueryDispatcher queryDispatcher;
@@ -96,7 +93,7 @@ class Network {
   Iterator<Node> getNeighbours() {
     // have to change the method params returned
     ArrayList<Node> list = new ArrayList<Node>();
-    TreeMap<Integer, ArrayList<Node>> arr = new TreeMap<Integer, ArrayList<Node>>();
+    ConcurrentSkipListMap<Integer, ArrayList<Node>> arr = new ConcurrentSkipListMap<Integer, ArrayList<Node>>();
     arr.putAll(routingTable);
     for (Map.Entry<Integer, ArrayList<Node>> entityArry : arr.entrySet()) {
       list.addAll(entityArry.getValue());
@@ -138,7 +135,7 @@ class Network {
   }
 
   private void addInitialNeighbours(HashMap<String, String> response) {
-        this.routingTable = new TreeMap<>();
+        this.routingTable = new ConcurrentSkipListMap<>();
         routingTable.put(0, new ArrayList<>());
         try {
           if (response.get("IP_1") != null) {
@@ -200,7 +197,7 @@ class Network {
    */
   public void printRoutingTable(){
     ArrayList<Node> list;
-    TreeMap<Integer, ArrayList<Node>> arr = new TreeMap<>();
+    ConcurrentSkipListMap<Integer, ArrayList<Node>> arr = new ConcurrentSkipListMap<>();
     arr.putAll(routingTable);
     for (Map.Entry<Integer, ArrayList<Node>> entityArray : arr.entrySet()) {
       list = entityArray.getValue();
