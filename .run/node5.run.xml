@@ -1,0 +1,18 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="node5" type="Application" factoryName="Application">
+    <option name="ALTERNATIVE_JRE_PATH" value="corretto-1.8" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <option name="MAIN_CLASS_NAME" value="com.distributed.p2pClient.Main" />
+    <module name="p2psearch" />
+    <option name="PROGRAM_PARAMETERS" value="$PROJECT_DIR$/test_data/node_5.properties" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="com.distributed.p2pClient.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
