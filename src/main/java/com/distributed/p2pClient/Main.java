@@ -140,6 +140,12 @@ public class Main {
                         System.out.println(">> Couldn't find an exact match for the filename");
                     }
                     break;
+                case "stats":
+                    long ser = client.getNumberOfQueriesReceived();
+                    long fwd = client.getNumberOfQueriesDispatched();
+                    long ans = client.getAnsweredQueryCount();
+                    System.out.printf("SER-%d FWD-%d ANS-%d%n", ser, fwd, ans);
+                    break;
                 default:
                     System.out.println("Illegal command");
                     System.out.println(helpString);
