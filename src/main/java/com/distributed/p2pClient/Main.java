@@ -72,7 +72,8 @@ public class Main {
               "download <filename> : Download the file from the Grid",
               "routes              : Print routing table of the node",
               "help                : Show help screen",
-              "exit                : Remove the current node from the Grid and exit");
+              "exit                : Remove the current node from the Grid and exit",
+              "stats:              : Get system stats");
       Scanner scanner = new Scanner(System.in);
         while (true){
             System.out.println();
@@ -107,6 +108,7 @@ public class Main {
                     client.printRoutingTable();
                     break;
                 case "search":
+                    long start = System.currentTimeMillis();
                     Future<List<String>> queryResultFuture = client.searchForFile(fileName);
                     List<String> queryResult = queryResultFuture.get();
                     if (queryResult.size() != 0) {
@@ -117,6 +119,8 @@ public class Main {
                     else {
                         System.out.println(">> No matching files found");
                     }
+                    long elapsedTime = System.currentTimeMillis() - start;
+                    System.out.printf("Elapsed Time : %d ms", elapsedTime);
                     break;
                 case "download":
                     Future<FileDownloadResult> downloadResponseFuture = client.downloadFile(fileName);
@@ -139,6 +143,12 @@ public class Main {
                     else{
                         System.out.println(">> Couldn't find an exact match for the filename");
                     }
+                    break;
+                case "stats":
+                    long ser = client.getNumberOfQueriesReceived();
+                    long fwd = client.getNumberOfQueriesDispatched();
+                    long ans = client.getAnsweredQueryCount();
+                    System.out.printf("SER-%d FWD-%d ANS-%d%n", ser, fwd, ans);
                     break;
                 default:
                     System.out.println("Illegal command");

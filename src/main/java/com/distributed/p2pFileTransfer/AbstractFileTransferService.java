@@ -156,6 +156,14 @@ public abstract class AbstractFileTransferService {
     return this.queryDispatcher.getDispatchedCount();
   }
 
+  /**
+   * Print the number of search queries answered so far
+   * @return
+   */
+  public long getAnsweredQueryCount(){
+    return this.queryListener.getAnsweredCount();
+  }
+
   void stop() {
     queryListener.stop();
     try {
