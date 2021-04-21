@@ -226,6 +226,7 @@ class QueryListener implements Runnable {
       try {
         fileTransferService.getQueryDispatcher().dispatchOne(joinOk).get();
         logger.log(Level.INFO, String.format("join ok to node %s", other.toString()));
+        incrementAnsweredCount();
       } catch (InterruptedException e) {
         e.printStackTrace();
       } catch (ExecutionException e) {
