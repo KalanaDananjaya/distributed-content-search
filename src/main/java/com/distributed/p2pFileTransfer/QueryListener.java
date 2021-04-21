@@ -18,6 +18,7 @@ class QueryListener implements Runnable {
   private final HashMap<Node, List<Executor>> pendingExecutors;
   private Logger logger;
   private long queryCount = 0;
+  private long answeredCount = 0;
   private final Set<String> pendingSearchQueries = ConcurrentHashMap.newKeySet();
 
   public QueryListener(AbstractFileTransferService fileTransferService, int port)
@@ -87,12 +88,20 @@ class QueryListener implements Runnable {
     }
   }
 
+  private synchronized void incrementAnsweredCount(){
+    this.answeredCount++;
+  }
+
   public void stop() {
     terminate = true;
   }
 
   public long getQueryCount() {
     return queryCount;
+  }
+
+  public long getAnsweredCount(){
+    return answeredCount;
   }
 
   private class ListenerThread implements Runnable {
@@ -191,6 +200,7 @@ class QueryListener implements Runnable {
       try {
         QueryResult result =
             fileTransferService.getQueryDispatcher().dispatchOne(responseQuery).get();
+        incrementAnsweredCount();
         logger.log(
             Level.INFO,
             String.format(
