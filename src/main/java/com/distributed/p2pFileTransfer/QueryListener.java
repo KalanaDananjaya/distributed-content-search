@@ -146,6 +146,15 @@ class QueryListener implements Runnable {
             logger.log(Level.SEVERE, e.toString());
           }
           break;
+        case "LEAVE":
+          Node node = null;
+          try {
+            node = new Node(InetAddress.getByName(data[2]), Integer.parseInt(data[3]));
+            LeaveRunner leaveRunner = new LeaveRunner(node);
+            executorService.execute(leaveRunner);
+          } catch (UnknownHostException e) {
+            e.printStackTrace();
+          }
         default:
           throw new IllegalStateException("Unexpected value: " + queryType);
       }
@@ -227,10 +236,30 @@ class QueryListener implements Runnable {
         fileTransferService.getQueryDispatcher().dispatchOne(joinOk).get();
         logger.log(Level.INFO, String.format("join ok to node %s", other.toString()));
         incrementAnsweredCount();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      } catch (ExecutionException e) {
-        e.printStackTrace();
+      } catch (InterruptedException | ExecutionException e) {
+        logger.log(Level.SEVERE, e.toString());
+      }
+    }
+  }
+
+  private class LeaveRunner implements Runnable {
+    Node other;
+
+    public LeaveRunner(Node other) {
+      this.other = other;
+    }
+
+    @Override
+    public void run() {
+      fileTransferService.getNetwork().removeNeighbour(other);
+      Query leaveOk =
+          Query.createQuery(fileTransferService.getCommandBuilder().getLeaveOkCommand(), other);
+      try {
+        fileTransferService.getQueryDispatcher().dispatchOne(leaveOk).get();
+        logger.log(Level.INFO, String.format("leave ok to node %s", other.toString()));
+        incrementAnsweredCount();
+      } catch (InterruptedException | ExecutionException e) {
+        logger.log(Level.SEVERE, e.toString());
       }
     }
   }
