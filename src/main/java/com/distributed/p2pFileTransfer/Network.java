@@ -170,12 +170,17 @@ class Network {
     Query query = Query.createQuery(cb.getUnRegisterCommand(USERNAME), boostrapServer);
 
     try {
+        /*
+        * TODO: sending leave messages to the neighbours shouldn't depend on whether the bootstrap server is alive or not
+        *  + you don't have to wait for its response so just dispatching without getting the response should also work
+        * */
       QueryResult response = queryDispatcher.dispatchOne(query).get(20, TimeUnit.SECONDS);
       if (response.body != null) {
         responseHandler = new ResponseHandler();
         HashMap<String, String> formattedResponse =
                 responseHandler.handleUnRegisterResponse(response.body);
         if(formattedResponse.get("value").equals("0")) {
+          // TODO: why are we sending leave request to current node? + shouldn't we send leave requests to all our neighbours
           return sendLeaveRequest(cb.currentNode);
         }
         else {
@@ -226,6 +231,10 @@ class Network {
 
 
   private Future<QueryResult> sendLeaveRequest(Node node) {
+      /*
+      * TODO: It may be a better idea to compose all the leave requests in to a list and let the
+      *  query dispatcher handle it using dispatch all
+      * */
     Query query = Query.createQuery(cb.getLeaveCommand(), node);
 
     //      QueryResult response = queryDispatcher.dispatchOne(query);
