@@ -20,8 +20,8 @@ class Network {
   private QueryDispatcher queryDispatcher;
   private ResponseHandler responseHandler;
 
-  private final CommandBuilder cb;
   private final Logger logger;
+  private final CommandBuilder cb;
 
   final String USERNAME = "USERNAME";
   /**
@@ -169,32 +169,8 @@ class Network {
   public Future<QueryResult> disconnect() {
     Query query = Query.createQuery(cb.getUnRegisterCommand(USERNAME), boostrapServer);
 
-    try {
-        /*
-        * TODO: sending leave messages to the neighbours shouldn't depend on whether the bootstrap server is alive or not
-        *  + you don't have to wait for its response so just dispatching without getting the response should also work
-        * */
-      QueryResult response = queryDispatcher.dispatchOne(query).get(20, TimeUnit.SECONDS);
-      if (response.body != null) {
-        responseHandler = new ResponseHandler();
-        HashMap<String, String> formattedResponse =
-                responseHandler.handleUnRegisterResponse(response.body);
-        if(formattedResponse.get("value").equals("0")) {
-          // TODO: why are we sending leave request to current node? + shouldn't we send leave requests to all our neighbours
-          return sendLeaveRequest(cb.currentNode);
-        }
-        else {
-          // failure
-          logger.log(Level.INFO,
-                  "error while unregistering. IP and port may not be in the registry or command is incorrect.");
-          return null;
-        }
-      }
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      logger.log(Level.INFO,
-              "error while unregistering. Exception occured\n"+e);
-    }
-    return null;
+    sendLeaveRequest();
+    return queryDispatcher.dispatchOne(query);
   }
 
   /**
@@ -230,21 +206,21 @@ class Network {
   }
 
 
-  private Future<QueryResult> sendLeaveRequest(Node node) {
-      /*
-      * TODO: It may be a better idea to compose all the leave requests in to a list and let the
-      *  query dispatcher handle it using dispatch all
-      * */
-    Query query = Query.createQuery(cb.getLeaveCommand(), node);
+  private List<Future<QueryResult>> sendLeaveRequest() {
 
-    //      QueryResult response = queryDispatcher.dispatchOne(query);
-//      if (response!=null) {
-//        responseHandler = new ResponseHandler();
-//        HashMap<String, String> formattedResponse =
-//                responseHandler.handleLeaveResponse(response.body);
-//        formattedResponse.get("val");
-//      }
-    return queryDispatcher.dispatchOne(query);
+    ArrayList<Node> list;
+    List<Query> queryList = new ArrayList<>();
+    ConcurrentSkipListMap<Integer, ArrayList<Node>> arr = new ConcurrentSkipListMap<>();
+    arr.putAll(routingTable);
+
+    for (Map.Entry<Integer, ArrayList<Node>> entityArray : arr.entrySet()) {
+      list = entityArray.getValue();
+      for(Node node: list) {
+        queryList.add(Query.createQuery(cb.getLeaveCommand(), node));
+      }
+    }
+
+    return queryDispatcher.dispatchAll(queryList);
 
   }
 }
