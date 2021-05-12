@@ -43,7 +43,7 @@ class QueryDispatcher {
                 new AcknowledgedQueryExecutor(query, socket, fileTransferService.getQueryListener());
         break;
       case "SEROK":
-      case "UNREGOK":
+      case "UNROK":
       case "JOINOK":
       case "LEAVEOK":
       case "REGOK":

@@ -122,6 +122,7 @@ class QueryListener implements Runnable {
       switch (queryType) {
         case "SEROK":
         case "REGOK":
+        case "UNROK": // check and change this to UNREGOK if needed
         case "JOINOK":
         case "LEAVEOK":
           synchronized (pendingExecutors) {
