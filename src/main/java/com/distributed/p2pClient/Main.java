@@ -18,6 +18,7 @@ import java.util.concurrent.Future;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.concurrent.*;
 
 public class Main {
   private static Logger logger;
@@ -91,8 +92,9 @@ public class Main {
                     break;
                 case "exit":
                     System.out.println(">> Disconnecting....");
+                    QueryResult result = null;
                     try{
-                        QueryResult result = client.shutdown().get(20, TimeUnit.SECONDS);
+                        result = client.shutdown().get(20, TimeUnit.SECONDS);
                     } catch (TimeoutException ignored) {
                         logger.log(Level.WARNING, "Bootstrap server time out");
                     }
