@@ -91,7 +91,11 @@ public class Main {
                     break;
                 case "exit":
                     System.out.println(">> Disconnecting....");
-                    QueryResult result = client.shutdown().get();
+                    try{
+                        QueryResult result = client.shutdown().get(20, TimeUnit.SECONDS);
+                    } catch (TimeoutException ignored) {
+                        logger.log(Level.WARNING, "Bootstrap server time out");
+                    }
                     if (result != null){
                         if (result.getState() == 0){
                             System.out.println(">> Node successfully disconnected from the network");
