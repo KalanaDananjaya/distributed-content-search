@@ -44,6 +44,9 @@ class AcknowledgedQueryExecutor extends Executor {
       Query query, DatagramSocket socket, QueryListener queryListener) {
     super(query, socket, queryListener);
     expectedResponseHeader = String.format("%sOK",query.body.split(" ")[1]);
+    if(expectedResponseHeader.equals("UNREGOK")){
+      expectedResponseHeader = "UNROK"; // change this to UNREGOK if needed
+    }
   }
 
   @Override
