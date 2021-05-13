@@ -195,8 +195,7 @@ class Network {
    */
   public void removeNeighbour(Node node){
     for (Map.Entry<Integer, ArrayList<Node>> entityArry : routingTable.entrySet()) {
-      entityArry.getValue().removeIf(entity ->
-              node.getPort() == entity.getPort() && node.getIpAddress() == entity.getIpAddress());
+      entityArry.getValue().removeIf(other-> other.equals(node));
     }
   }
 
